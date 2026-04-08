@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Africa | Mozambique Services</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; }
+        .modal-active { display: flex !important; animation: fadeIn 0.3s ease; }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen pb-10">
+
+    <header class="p-5 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40">
+        <div class="max-w-xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-extrabold text-yellow-500 tracking-tighter uppercase">Smart Africa</h1>
+                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Maputo • Matola</p>
+            </div>
+            <div id="status" class="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
+                <span id="statusDot" class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                <span id="statusText" class="text-[9px] font-bold text-slate-400">OFFLINE</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-xl mx-auto p-4">
+        <div class="relative my-6">
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+            <input type="text" id="search" autocomplete="off"
+                class="w-full pl-12 pr-4 py-4 bg-slate-800/50 border border-slate-700 rounded-2xl focus:ring-2 focus:ring-yellow-500 outline-none transition-all placeholder:text-slate-600 text-white"
+                placeholder="Pesquisar (Ex: AC, Furo, Mecânico...)">
+        </div>
+
+        <div id="results" class="space-y-4">
+            <div class="text-center py-20 text-slate-500 italic">Conectando ao banco de dados...</div>
+        </div>
+    </main>
+
+    <div id="paymentModal" class="fixed inset-0 bg-slate-950/90 z-50 hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+            <div class="text-center mb-6">
+                <h2 class="text-xl font-bold text-white uppercase tracking-tighter">Confirmar Pedido</h2>
+                <p class="text-slate-400 text-sm mt-1">Taxa: <span id="modalPrice" class="text-yellow-500 font-bold">--</span> MT</p>
+            </div>
+            <div class="flex flex-col gap-3">
+                <button onclick="sendOrder('856113036')" class="w-full bg-green-600 hover:bg-green-500 text-white font-extrabold py-4 rounded-2xl uppercase">Pagar M-Pesa</button>
+                <button onclick="sendOrder('873213896')" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-extrabold py-4 rounded-2xl uppercase">Pagar e-Mola</button>
+                <button onclick="closeModal()" class="mt-2 text-slate-500 text-sm font-bold uppercase">Voltar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURATION FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyAK5TZRYq8xsdYrJmjHMFBSCaN55Z_HtBc",
+            authDomain: "mozambique-services.firebaseapp.com",
+            projectId: "mozambique-services",
+            storageBucket: "mozambique-services.firebasestorage.app",
+            messagingSenderId: "432836284981",
+            appId: "1:432836284981:web:19fb3c67a9b8808e7e577c"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        let allArtisans = [];
+        let currentArtisan = null;
+
+        // CHARGEMENT EN TEMPS RÉEL
+        function fetchArtisans() {
+            db.collection('artisans').onSnapshot((snapshot) => {
+                allArtisans = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                document.getElementById('statusDot').classList.replace('bg-red-500', 'bg-green-500');
+                document.getElementById('statusDot').classList.remove('animate-pulse');
+                document.getElementById('statusText').innerText = "ONLINE";
+                document.getElementById('statusText').classList.replace('text-slate-400', 'text-green-500');
+                render(allArtisans);
+            }, (error) => {
+                document.getElementById('results').innerHTML = `<p class="text-red-500 text-center">Erro: Verifique as Regras Firestore.</p>`;
+            });
+        }
+
+        function render(list) {
+            const container = document.getElementById('results');
+            container.innerHTML = '';
+            if(list.length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-500 py-10">Nenhum resultado...</p>`;
+                return;
+            }
+            list.forEach(a => {
+                container.innerHTML += `
+                    <div class="bg-slate-800/40 border border-slate-700/50 p-5 rounded-2xl">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="text-[10px] font-black uppercase text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-md">${a.cat}</span>
+                                <h3 class="text-lg font-bold text-white mt-1">${a.nome}</h3>
+                                <p class="text-slate-500 text-[10px] uppercase font-bold mt-1">${a.bairro}</p>
+                            </div>
+                            <p class="text-xl font-black text-white">${a.preco}MT</p>
+                        </div>
+                        <button onclick="openModal('${a.id}')" class="w-full py-3 bg-slate-700 hover:bg-yellow-500 hover:text-black rounded-xl font-bold transition-all text-white uppercase text-sm">Solicitar Contacto</button>
+                    </div>`;
+            });
+            lucide.createIcons();
+        }
+
+        function openModal(id) {
+            currentArtisan = allArtisans.find(a => a.id === id);
+            document.getElementById('modalPrice').innerText = currentArtisan.preco;
+            document.getElementById('paymentModal').classList.add('modal-active');
+        }
+
+        function closeModal() { document.getElementById('paymentModal').classList.remove('modal-active'); }
+
+        function sendOrder(target) {
+            let rawNum = currentArtisan.tel.toString().replace(/\s/g, '').replace('+258', '');
+            let secureCode = rawNum.split('').map(n => (parseInt(n) + 1) % 10).join('');
+            const textMsg = encodeURIComponent(`*SMART AFRICA*\nID: ${currentArtisan.id}\nNOME: ${currentArtisan.nome}\nTRACKING: SA-${secureCode}\n\nOlá! Gostaria do contacto deste profissional.`);
+            window.open(`https://wa.me/258${target}?text=${textMsg}`);
+            closeModal();
+        }
+
+        // RECHERCHE DYNAMIQUE
+        document.getElementById('search').oninput = (e) => {
+            const q = e.target.value.toLowerCase().trim();
+            const filtered = allArtisans.filter(a => 
+                a.nome.toLowerCase().includes(q) || a.cat.toLowerCase().includes(q) || 
+                a.bairro.toLowerCase().includes(q) || (a.tags && a.tags.toLowerCase().includes(q))
+            );
+            render(filtered);
+        };
+
+        fetchArtisans();
+    </script>
+</body>
+                  </html>
+  
