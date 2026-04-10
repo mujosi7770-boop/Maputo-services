@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Africa | Mozambique Services</title>
+    <title>Smart Africa | Yango Services</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -11,21 +11,21 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; }
-        .modal-active { display: flex !important; animation: fadeIn 0.3s ease; }
+        .card-yango { transition: all 0.3s ease; }
+        .card-yango:active { transform: scale(0.96); opacity: 0.8; }
     </style>
 </head>
-<body class="text-slate-200 min-h-screen pb-10">
+<body class="text-slate-200 min-h-screen pb-20">
 
-    <header class="p-5 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40">
+    <header class="p-5 bg-slate-900/90 backdrop-blur-xl border-b border-slate-800 sticky top-0 z-50">
         <div class="max-w-xl mx-auto flex justify-between items-center">
             <div>
-                <h1 class="text-xl font-extrabold text-yellow-500 tracking-tighter uppercase">Smart Africa</h1>
-                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Maputo • Matola</p>
+                <h1 class="text-2xl font-black text-orange-500 tracking-tighter uppercase">Smart Africa</h1>
+                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Serviços Próximos de Ti</p>
             </div>
-            <div id="status" class="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
-                <span id="statusDot" class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                <span id="statusText" class="text-[9px] font-bold text-slate-400">OFFLINE</span>
-            </div>
+            <a href="perfil.html" class="bg-slate-800 p-2 rounded-full border border-slate-700">
+                <i data-lucide="user" class="w-5 h-5 text-orange-500"></i>
+            </a>
         </div>
     </header>
 
@@ -33,28 +33,29 @@
         <div class="relative my-6">
             <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
             <input type="text" id="search" autocomplete="off"
-                class="w-full pl-12 pr-4 py-4 bg-slate-800/50 border border-slate-700 rounded-2xl focus:ring-2 focus:ring-yellow-500 outline-none transition-all placeholder:text-slate-600 text-white"
-                placeholder="Pesquisar (Ex: AC, Furo, Mecânico...)">
+                class="w-full pl-12 pr-4 py-5 bg-slate-800/50 border border-slate-700 rounded-[24px] focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-600 text-white"
+                placeholder="O que precisas agora?">
         </div>
 
         <div id="results" class="space-y-4">
-            <div class="text-center py-20 text-slate-500 italic">Conectando ao banco de dados...</div>
+            <div class="text-center py-20 text-slate-600 animate-pulse font-bold uppercase tracking-widest text-xs">
+                Localizando profissionais próximos...
+            </div>
         </div>
     </main>
 
-    <div id="paymentModal" class="fixed inset-0 bg-slate-950/90 z-50 hidden items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-3xl p-6 shadow-2xl">
-            <div class="text-center mb-6">
-                <h2 class="text-xl font-bold text-white uppercase tracking-tighter">Confirmar Pedido</h2>
-                <p class="text-slate-400 text-sm mt-1">Taxa: <span id="modalPrice" class="text-yellow-500 font-bold">--</span> MT</p>
-            </div>
-            <div class="flex flex-col gap-3">
-                <button onclick="sendOrder('856113036')" class="w-full bg-green-600 hover:bg-green-500 text-white font-extrabold py-4 rounded-2xl uppercase">Pagar M-Pesa</button>
-                <button onclick="sendOrder('873213896')" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-extrabold py-4 rounded-2xl uppercase">Pagar e-Mola</button>
-                <button onclick="closeModal()" class="mt-2 text-slate-500 text-sm font-bold uppercase">Voltar</button>
-            </div>
+    <nav class="fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-md border-t border-slate-800 p-4">
+        <div class="max-w-xl mx-auto flex justify-around">
+            <button onclick="location.reload()" class="flex flex-col items-center gap-1 text-orange-500">
+                <i data-lucide="map" class="w-6 h-6"></i>
+                <span class="text-[9px] font-bold uppercase">Mapa</span>
+            </button>
+            <a href="registo.html" class="flex flex-col items-center gap-1 text-slate-500">
+                <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                <span class="text-[9px] font-bold uppercase">Registo</span>
+            </a>
         </div>
-    </div>
+    </nav>
 
     <script>
         // CONFIGURATION FIREBASE
@@ -66,78 +67,112 @@
             messagingSenderId: "432836284981",
             appId: "1:432836284981:web:19fb3c67a9b8808e7e577c"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        let allArtisans = [];
-        let currentArtisan = null;
 
-        // CHARGEMENT EN TEMPS RÉEL
+        let allArtisans = [];
+        let userCoords = null;
+
+        // --- 1. GÉOLOCALISATION CLIENT ---
+        function getClientLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    fetchArtisans();
+                }, () => { fetchArtisans(); }); // Charge même si refus GPS
+            }
+        }
+
+        // --- 2. CALCUL DISTANCE (Haversine) ---
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            if (!lat1 || !lon1 || !lat2 || !lon2) return 999;
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        // --- 3. RÉCUPÉRATION DATA ---
         function fetchArtisans() {
             db.collection('artisans').onSnapshot((snapshot) => {
                 allArtisans = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                document.getElementById('statusDot').classList.replace('bg-red-500', 'bg-green-500');
-                document.getElementById('statusDot').classList.remove('animate-pulse');
-                document.getElementById('statusText').innerText = "ONLINE";
-                document.getElementById('statusText').classList.replace('text-slate-400', 'text-green-500');
+                
+                if (userCoords) {
+                    allArtisans.forEach(a => {
+                        a.distancia = calculateDistance(userCoords.lat, userCoords.lng, a.lat, a.lng);
+                    });
+                    allArtisans.sort((a, b) => a.distancia - b.distancia);
+                }
                 render(allArtisans);
-            }, (error) => {
-                document.getElementById('results').innerHTML = `<p class="text-red-500 text-center">Erro: Verifique as Regras Firestore.</p>`;
             });
         }
 
+        // --- 4. LOGIQUE PAIEMENT PAR CLIC (-20 MT) ---
+        async function solicitarContacto(id, tel) {
+            const docRef = db.collection('artisans').doc(id);
+            const doc = await docRef.get();
+            const saldo = doc.data().saldo || 0;
+
+            if (saldo >= 20) {
+                await docRef.update({ saldo: saldo - 20 });
+                window.location.href = `tel:${tel}`;
+            } else {
+                alert("Este prestador está offline por falta de saldo.");
+            }
+        }
+
+        // --- 5. RENDU DES CARTES ---
         function render(list) {
             const container = document.getElementById('results');
             container.innerHTML = '';
-            if(list.length === 0) {
-                container.innerHTML = `<p class="text-center text-slate-500 py-10">Nenhum resultado...</p>`;
-                return;
-            }
-            list.forEach(a => {
+            
+            list.filter(a => a.saldo >= 20).forEach(a => {
+                const distText = a.distancia ? `A ${a.distancia.toFixed(1)} km de ti` : "Maputo";
                 container.innerHTML += `
-                    <div class="bg-slate-800/40 border border-slate-700/50 p-5 rounded-2xl">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <span class="text-[10px] font-black uppercase text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-md">${a.cat}</span>
-                                <h3 class="text-lg font-bold text-white mt-1">${a.nome}</h3>
-                                <p class="text-slate-500 text-[10px] uppercase font-bold mt-1">${a.bairro}</p>
-                            </div>
-                            <p class="text-xl font-black text-white">${a.preco}MT</p>
+                    <div class="card-yango bg-slate-800/40 border border-slate-700/50 p-6 rounded-[32px] shadow-xl">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[9px] font-black bg-orange-500/10 text-orange-500 px-3 py-1 rounded-full uppercase">${a.cat}</span>
+                            <span class="text-[10px] text-slate-500 font-bold uppercase">${distText}</span>
                         </div>
-                        <button onclick="openModal('${a.id}')" class="w-full py-3 bg-slate-700 hover:bg-yellow-500 hover:text-black rounded-xl font-bold transition-all text-white uppercase text-sm">Solicitar Contacto</button>
+                        <h3 class="text-xl font-bold text-white mt-3">${a.nome}</h3>
+                        <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">${a.bairro}</p>
+                        
+                        <button onclick="solicitarContacto('${a.id}', '${a.tel}')" 
+                            class="w-full mt-6 py-4 bg-orange-600 hover:bg-orange-500 text-white rounded-2xl font-black uppercase text-sm shadow-lg shadow-orange-900/20 transition-all">
+                            Ligar Agora
+                        </button>
                     </div>`;
             });
             lucide.createIcons();
         }
 
-        function openModal(id) {
-            currentArtisan = allArtisans.find(a => a.id === id);
-            document.getElementById('modalPrice').innerText = currentArtisan.preco;
-            document.getElementById('paymentModal').classList.add('modal-active');
+        // --- 6. BLOC D'IMPORTATION (À SUPPRIMER APRÈS LA PREMIÈRE UTILISATION) ---
+        async function importarDados() {
+            const snap = await db.collection('artisans').limit(1).get();
+            if (snap.empty) {
+                const lista = [
+                    {nome:"Refri-Maputo AC", cat:"❄️ FRIO", bairro:"Alto Maé", tel:"+258842354805", saldo: 500, lat: -25.96, lng: 32.57},
+                    {nome:"Sengelec Eletricista", cat:"⚡ ELÉCTRICA", bairro:"Maputo", tel:"+258842242424", saldo: 500, lat: -25.95, lng: 32.58},
+                    {nome:"Mestre João Canalizador", cat:"🚰 CANALIZADOR", bairro:"Matola", tel:"+258847778899", saldo: 500, lat: -25.91, lng: 32.46}
+                    // Ajoute tes 100+ ici sur le même modèle
+                ];
+                for (let a of lista) { await db.collection('artisans').add(a); }
+                alert("SUCESSO: 100+ Artisãos Importados com 500 MT!");
+            }
         }
+        importarDados();
 
-        function closeModal() { document.getElementById('paymentModal').classList.remove('modal-active'); }
-
-        function sendOrder(target) {
-            let rawNum = currentArtisan.tel.toString().replace(/\s/g, '').replace('+258', '');
-            let secureCode = rawNum.split('').map(n => (parseInt(n) + 1) % 10).join('');
-            const textMsg = encodeURIComponent(`*SMART AFRICA*\nID: ${currentArtisan.id}\nNOME: ${currentArtisan.nome}\nTRACKING: SA-${secureCode}\n\nOlá! Gostaria do contacto deste profissional.`);
-            window.open(`https://wa.me/258${target}?text=${textMsg}`);
-            closeModal();
-        }
-
-        // RECHERCHE DYNAMIQUE
+        // Initialisation
+        getClientLocation();
+        
+        // Recherche
         document.getElementById('search').oninput = (e) => {
             const q = e.target.value.toLowerCase().trim();
-            const filtered = allArtisans.filter(a => 
-                a.nome.toLowerCase().includes(q) || a.cat.toLowerCase().includes(q) || 
-                a.bairro.toLowerCase().includes(q) || (a.tags && a.tags.toLowerCase().includes(q))
-            );
+            const filtered = allArtisans.filter(a => a.nome.toLowerCase().includes(q) || a.cat.toLowerCase().includes(q));
             render(filtered);
         };
-
-        fetchArtisans();
     </script>
 </body>
-                  </html>
-  
+</html>
