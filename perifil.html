@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Saldo | Smart Africa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-slate-950 text-white p-6">
+    <div class="max-w-md mx-auto">
+        <div id="loginSection" class="bg-slate-900 p-8 rounded-[40px] border border-slate-800 shadow-2xl mt-10">
+            <h1 class="text-2xl font-black text-orange-500 uppercase mb-4">Ver Meu Saldo</h1>
+            <input type="tel" id="loginTel" placeholder="Teu número (+258...)" class="w-full bg-slate-800 p-4 rounded-2xl mb-4 outline-none">
+            <button onclick="verificarConta()" class="w-full bg-orange-600 py-4 rounded-2xl font-black uppercase">Entrar</button>
+        </div>
+        <div id="profileSection" class="hidden">
+            <div class="bg-orange-600 p-8 rounded-[40px] shadow-lg mb-4">
+                <p class="text-[10px] font-black uppercase opacity-80">Saldo</p>
+                <h3 class="text-5xl font-black italic"><span id="userSaldo">0</span> MT</h3>
+            </div>
+            <div class="bg-slate-900 p-6 rounded-[32px] border border-slate-800">
+                <p class="text-xs text-center text-slate-400 mb-4">Recarregue via M-Pesa contactando o Admin.</p>
+                <a href="https://wa.me/258856113036" class="block text-center w-full py-4 bg-white text-black rounded-2xl font-black uppercase">Recarregar agora</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyAK5TZRYq8xsdYrJmjHMFBSCaN55Z_HtBc", authDomain: "mozambique-services.firebaseapp.com", projectId: "mozambique-services", storageBucket: "mozambique-services.firebasestorage.app", messagingSenderId: "432836284981", appId: "1:432836284981:web:19fb3c67a9b8808e7e577c" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        async function verificarConta() {
+            const telInput = document.getElementById('loginTel').value.trim();
+            const snapshot = await db.collection('artisans').where('tel', '==', telInput).get();
+            if(snapshot.empty) return alert("Número não encontrado!");
+            const user = snapshot.docs[0].data();
+            document.getElementById('userSaldo').innerText = user.saldo || 0;
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('profileSection').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
