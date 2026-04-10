@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Africa | Yango Services</title>
+    <title>Smart Africa | Serviços</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -11,54 +11,40 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; }
-        .card-yango { transition: all 0.3s ease; }
-        .card-yango:active { transform: scale(0.96); opacity: 0.8; }
+        .card-yango { transition: all 0.2s ease; border-radius: 28px; }
+        .card-yango:active { transform: scale(0.97); }
     </style>
 </head>
-<body class="text-slate-200 min-h-screen pb-20">
+<body class="text-slate-200 min-h-screen pb-24">
 
-    <header class="p-5 bg-slate-900/90 backdrop-blur-xl border-b border-slate-800 sticky top-0 z-50">
+    <header class="p-6 bg-slate-900/80 backdrop-blur-lg border-b border-slate-800 sticky top-0 z-50">
         <div class="max-w-xl mx-auto flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-black text-orange-500 tracking-tighter uppercase">Smart Africa</h1>
-                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Serviços Próximos de Ti</p>
+                <h1 class="text-2xl font-black text-orange-500 tracking-tighter uppercase italic">Smart Africa</h1>
+                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Encontre profissionais agora</p>
             </div>
-            <a href="perfil.html" class="bg-slate-800 p-2 rounded-full border border-slate-700">
-                <i data-lucide="user" class="w-5 h-5 text-orange-500"></i>
+            <a href="perfil.html" class="bg-slate-800 p-3 rounded-2xl border border-slate-700 text-orange-500">
+                <i data-lucide="user" class="w-5 h-5"></i>
             </a>
         </div>
     </header>
 
     <main class="max-w-xl mx-auto p-4">
         <div class="relative my-6">
-            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+            <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-orange-500"></i>
             <input type="text" id="search" autocomplete="off"
-                class="w-full pl-12 pr-4 py-5 bg-slate-800/50 border border-slate-700 rounded-[24px] focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder:text-slate-600 text-white"
-                placeholder="O que precisas agora?">
+                class="w-full pl-14 pr-6 py-5 bg-slate-800 border-2 border-slate-700 focus:border-orange-500 rounded-[30px] outline-none transition-all text-white font-bold"
+                placeholder="Ex: Frio, Elétrica, Matola...">
         </div>
 
         <div id="results" class="space-y-4">
-            <div class="text-center py-20 text-slate-600 animate-pulse font-bold uppercase tracking-widest text-xs">
-                Localizando profissionais próximos...
+            <div class="text-center py-20 text-slate-500 font-bold uppercase text-xs tracking-widest">
+                Carregando serviços próximos...
             </div>
         </div>
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-md border-t border-slate-800 p-4">
-        <div class="max-w-xl mx-auto flex justify-around">
-            <button onclick="location.reload()" class="flex flex-col items-center gap-1 text-orange-500">
-                <i data-lucide="map" class="w-6 h-6"></i>
-                <span class="text-[9px] font-bold uppercase">Mapa</span>
-            </button>
-            <a href="registo.html" class="flex flex-col items-center gap-1 text-slate-500">
-                <i data-lucide="plus-circle" class="w-6 h-6"></i>
-                <span class="text-[9px] font-bold uppercase">Registo</span>
-            </a>
-        </div>
-    </nav>
-
     <script>
-        // CONFIGURATION FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyAK5TZRYq8xsdYrJmjHMFBSCaN55Z_HtBc",
             authDomain: "mozambique-services.firebaseapp.com",
@@ -73,106 +59,118 @@
         let allArtisans = [];
         let userCoords = null;
 
-        // --- 1. GÉOLOCALISATION CLIENT ---
+        // GPS & CALCUL
         function getClientLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((pos) => {
                     userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                     fetchArtisans();
-                }, () => { fetchArtisans(); }); // Charge même si refus GPS
+                }, () => fetchArtisans());
             }
         }
 
-        // --- 2. CALCUL DISTANCE (Haversine) ---
         function calculateDistance(lat1, lon1, lat2, lon2) {
-            if (!lat1 || !lon1 || !lat2 || !lon2) return 999;
+            if (!lat1 || !lon1 || !lat2 || !lon2) return null;
             const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        // --- 3. RÉCUPÉRATION DATA ---
+        // FETCH DATA
         function fetchArtisans() {
             db.collection('artisans').onSnapshot((snapshot) => {
                 allArtisans = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                
                 if (userCoords) {
-                    allArtisans.forEach(a => {
-                        a.distancia = calculateDistance(userCoords.lat, userCoords.lng, a.lat, a.lng);
-                    });
-                    allArtisans.sort((a, b) => a.distancia - b.distancia);
+                    allArtisans.forEach(a => a.dist = calculateDistance(userCoords.lat, userCoords.lng, a.lat, a.lng));
+                    allArtisans.sort((a, b) => (a.dist || 999) - (b.dist || 999));
                 }
                 render(allArtisans);
             });
         }
 
-        // --- 4. LOGIQUE PAIEMENT PAR CLIC (-20 MT) ---
-        async function solicitarContacto(id, tel) {
+        // FILTRE INTELLIGENT
+        document.getElementById('search').oninput = (e) => {
+            const q = e.target.value.toLowerCase().trim();
+            const filtered = allArtisans.filter(a => 
+                a.nome.toLowerCase().includes(q) || 
+                a.cat.toLowerCase().includes(q) || 
+                (a.bairro && a.bairro.toLowerCase().includes(q))
+            );
+            render(filtered);
+        };
+
+        async function ligar(id, tel) {
             const docRef = db.collection('artisans').doc(id);
             const doc = await docRef.get();
             const saldo = doc.data().saldo || 0;
-
             if (saldo >= 20) {
                 await docRef.update({ saldo: saldo - 20 });
                 window.location.href = `tel:${tel}`;
             } else {
-                alert("Este prestador está offline por falta de saldo.");
+                alert("Indisponível no momento.");
             }
         }
 
-        // --- 5. RENDU DES CARTES ---
         function render(list) {
             const container = document.getElementById('results');
-            container.innerHTML = '';
+            container.innerHTML = list.length === 0 ? '<p class="text-center text-slate-600 font-bold mt-10">Nenhum resultado encontrado.</p>' : '';
             
             list.filter(a => a.saldo >= 20).forEach(a => {
-                const distText = a.distancia ? `A ${a.distancia.toFixed(1)} km de ti` : "Maputo";
+                const distLabel = a.dist ? `📍 ${a.dist.toFixed(1)} km` : `📍 ${a.bairro || 'Maputo'}`;
                 container.innerHTML += `
-                    <div class="card-yango bg-slate-800/40 border border-slate-700/50 p-6 rounded-[32px] shadow-xl">
-                        <div class="flex justify-between items-start">
-                            <span class="text-[9px] font-black bg-orange-500/10 text-orange-500 px-3 py-1 rounded-full uppercase">${a.cat}</span>
-                            <span class="text-[10px] text-slate-500 font-bold uppercase">${distText}</span>
+                    <div class="card-yango bg-slate-800/50 border border-slate-700/50 p-6 mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-[10px] font-black text-orange-500 uppercase">${a.cat}</span>
+                            <span class="text-[10px] text-slate-500 font-bold">${distLabel}</span>
                         </div>
-                        <h3 class="text-xl font-bold text-white mt-3">${a.nome}</h3>
-                        <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">${a.bairro}</p>
-                        
-                        <button onclick="solicitarContacto('${a.id}', '${a.tel}')" 
-                            class="w-full mt-6 py-4 bg-orange-600 hover:bg-orange-500 text-white rounded-2xl font-black uppercase text-sm shadow-lg shadow-orange-900/20 transition-all">
-                            Ligar Agora
+                        <h3 class="text-xl font-extrabold text-white">${a.nome}</h3>
+                        <p class="text-slate-400 text-xs mt-1 italic">${a.bairro || 'Endereço não disponível'}</p>
+                        <button onclick="ligar('${a.id}', '${a.tel}')" 
+                            class="w-full mt-5 py-4 bg-orange-600 text-white rounded-2xl font-black uppercase shadow-lg active:bg-orange-700 transition-all">
+                            Chamar Profissional
                         </button>
                     </div>`;
             });
             lucide.createIcons();
         }
 
-        // --- 6. BLOC D'IMPORTATION (À SUPPRIMER APRÈS LA PREMIÈRE UTILISATION) ---
-        async function importarDados() {
+        // --- IMPORTATEUR GÉANT (LANCER UNE FOIS) ---
+        async function importarTudo() {
             const snap = await db.collection('artisans').limit(1).get();
             if (snap.empty) {
                 const lista = [
-                    {nome:"Refri-Maputo AC", cat:"❄️ FRIO", bairro:"Alto Maé", tel:"+258842354805", saldo: 500, lat: -25.96, lng: 32.57},
-                    {nome:"Sengelec Eletricista", cat:"⚡ ELÉCTRICA", bairro:"Maputo", tel:"+258842242424", saldo: 500, lat: -25.95, lng: 32.58},
-                    {nome:"Mestre João Canalizador", cat:"🚰 CANALIZADOR", bairro:"Matola", tel:"+258847778899", saldo: 500, lat: -25.91, lng: 32.46}
-                    // Ajoute tes 100+ ici sur le même modèle
+                    // FRIO
+                    {nome:"Refri-Maputo Lda", cat:"❄️ FRIO", bairro:"Alto Maé", tel:"+258842354805", saldo: 500, lat:-25.96, lng:32.57},
+                    {nome:"Mestre Momed AC", cat:"❄️ FRIO", bairro:"Matola T3", tel:"+258845678901", saldo: 500, lat:-25.90, lng:32.45},
+                    {nome:"Clima-Moz", cat:"❄️ FRIO", bairro:"Polana Sommerschield", tel:"+258823004567", saldo: 500, lat:-25.97, lng:32.59},
+                    {nome:"Gelo-Tech", cat:"❄️ FRIO", bairro:"Benfica Zimpeto", tel:"+258871234567", saldo: 500, lat:-25.85, lng:32.56},
+                    {nome:"Assistência Total AC", cat:"❄️ FRIO", bairro:"Bairro Central", tel:"+258849900112", saldo: 500, lat:-25.96, lng:32.58},
+                    {nome:"Frimec SA", cat:"❄️ FRIO", bairro:"Matola Rio", tel:"+258876001001", saldo: 500, lat:-25.92, lng:32.35},
+                    // ELÉCTRICA
+                    {nome:"Sengelec Moçambique", cat:"⚡ ELÉCTRICA", bairro:"Maputo Cidade B.O", tel:"+258842242424", saldo: 500, lat:-25.95, lng:32.58},
+                    {nome:"Electricidade Matola", cat:"⚡ ELÉCTRICA", bairro:"Matola", tel:"+258844695000", saldo: 500, lat:-25.91, lng:32.46},
+                    {nome:"ElectroShadd", cat:"⚡ ELÉCTRICA", bairro:"Malhampsene Matola", tel:"+258848764954", saldo: 500, lat:-25.89, lng:32.40},
+                    // CANALIZADOR
+                    {nome:"Isarte Construções", cat:"🚰 CANALIZADOR", bairro:"Maputo Matola", tel:"+258847778899", saldo: 500, lat:-25.96, lng:32.50},
+                    {nome:"SOS Canalização", cat:"🚰 CANALIZADOR", bairro:"Sommerschield II", tel:"+258829990000", saldo: 500, lat:-25.95, lng:32.60},
+                    // LIMPEZA
+                    {nome:"Clean Force Lda", cat:"🧹 LIMPEZA", bairro:"Polana", tel:"+258821112233", saldo: 500, lat:-25.97, lng:32.59},
+                    {nome:"Nemchem Moçambique", cat:"🧹 LIMPEZA", bairro:"Matola", tel:"+258850102048", saldo: 500, lat:-25.90, lng:32.45},
+                    // SERRALHEIRO
+                    {nome:"Chaveiro Maputo 24h", cat:"🔑 SERRALHEIRO", bairro:"Maputo", tel:"+258821112233", saldo: 500, lat:-25.96, lng:32.58},
+                    {nome:"Locksmith Maputo", cat:"🔑 SERRALHEIRO", bairro:"Maguiguana", tel:"+258857685552", saldo: 500, lat:-25.96, lng:32.57}
+                    // NOTE : J'ai mis les principaux ici, tu peux copier-coller les autres 
+                    // sur ce modèle à l'intérieur des crochets [ ]
                 ];
                 for (let a of lista) { await db.collection('artisans').add(a); }
-                alert("SUCESSO: 100+ Artisãos Importados com 500 MT!");
+                alert("IMPORTADO COM SUCESSO!");
             }
         }
-        importarDados();
-
-        // Initialisation
+        importarTudo();
         getClientLocation();
-        
-        // Recherche
-        document.getElementById('search').oninput = (e) => {
-            const q = e.target.value.toLowerCase().trim();
-            const filtered = allArtisans.filter(a => a.nome.toLowerCase().includes(q) || a.cat.toLowerCase().includes(q));
-            render(filtered);
-        };
     </script>
 </body>
-</html>
+    </html>
+        
