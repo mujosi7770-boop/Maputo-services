@@ -3,44 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Africa | Serviços MZ</title>
+    <title>Smart Africa | Serviços Profissionais</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; }
-        .card-yango { transition: all 0.2s ease; border-radius: 24px; border: 1px solid rgba(51, 65, 85, 0.5); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; color: white; }
+        .card-yango { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(10px); border-radius: 28px; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
     </style>
 </head>
-<body class="text-slate-200 min-h-screen pb-24">
+<body>
 
-    <header class="p-6 bg-slate-900/90 backdrop-blur-lg border-b border-slate-800 sticky top-0 z-50">
-        <div class="max-w-xl mx-auto flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-black text-orange-500 tracking-tighter uppercase italic">Smart Africa</h1>
-                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Maputo & Matola Services</p>
-            </div>
-            <a href="perfil.html" class="bg-slate-800 p-3 rounded-2xl border border-slate-700 text-orange-500">
-                <i data-lucide="user" class="w-5 h-5"></i>
-            </a>
-        </div>
+    <header class="p-6 sticky top-0 bg-slate-900/80 backdrop-blur-md z-50 border-b border-slate-800">
+        <h1 class="text-2xl font-black text-orange-500 italic uppercase tracking-tighter">Smart Africa</h1>
+        <p class="text-[10px] font-bold text-slate-500 uppercase">Maputo • Matola • Boane</p>
     </header>
 
-    <main class="max-w-xl mx-auto p-4">
-        <div class="relative my-6">
-            <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-orange-500"></i>
-            <input type="text" id="search" autocomplete="off"
-                class="w-full pl-14 pr-6 py-5 bg-slate-800 border-2 border-slate-700 focus:border-orange-500 rounded-[25px] outline-none text-white font-bold"
-                placeholder="Ex: Mecânica, Frio, Matola...">
+    <main class="p-4 max-w-xl mx-auto">
+        <div class="relative mb-8">
+            <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 text-orange-500 w-5 h-5"></i>
+            <input type="text" id="search" placeholder="Procurar (frio, eletricista, bairro...)" 
+                class="w-full bg-slate-800 border-2 border-slate-700 p-5 pl-14 rounded-[25px] outline-none focus:border-orange-500 font-bold transition-all">
         </div>
 
         <div id="results" class="space-y-4">
-            <div class="text-center py-20 text-slate-500 font-bold uppercase text-xs animate-pulse">
-                Sincronizando 100+ profissionais...
             </div>
-        </div>
     </main>
 
     <script>
@@ -54,162 +43,85 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-
         let allArtisans = [];
 
-        async function forcarImportacaoTurbo() {
-            const lista = [
-                // FRIO
-                {nome:"Refri-Maputo Lda", cat:"❄️ FRIO", bairro:"Alto Maé", tel:"+258842354805", saldo: 500},
-                {nome:"Mestre Momed AC", cat:"❄️ FRIO", bairro:"Matola T3", tel:"+258845678901", saldo: 500},
-                {nome:"Clima-Moz", cat:"❄️ FRIO", bairro:"Polana / Sommerschield", tel:"+258823004567", saldo: 500},
-                {nome:"Gelo-Tech", cat:"❄️ FRIO", bairro:"Benfica / Zimpeto", tel:"+258871234567", saldo: 500},
-                {nome:"Assistência Total AC", cat:"❄️ FRIO", bairro:"Bairro Central", tel:"+258849900112", saldo: 500},
-                {nome:"Frimec SA", cat:"❄️ FRIO", bairro:"Matola Rio", tel:"+258876001001", saldo: 500},
-                {nome:"DR FRIO", cat:"❄️ FRIO", bairro:"Maputo", tel:"+258824503321", saldo: 500},
-                {nome:"Eagle-X Lda", cat:"❄️ FRIO", bairro:"Maputo", tel:"+258846002211", saldo: 500},
-                {nome:"Tecno-Air", cat:"❄️ FRIO", bairro:"Maputo", tel:"+258827001122", saldo: 500},
-                {nome:"MECA FRIO Lda", cat:"❄️ FRIO", bairro:"Maputo", tel:"+258878003344", saldo: 500},
-                {nome:"Emforma", cat:"❄️ FRIO", bairro:"Maputo", tel:"+258849005566", saldo: 500},
-                {nome:"FrioElite RSS", cat:"❄️ FRIO", bairro:"Maputo", tel:"+258823337788", saldo: 500},
-                {nome:"APN Services AVAC", cat:"❄️ FRIO", bairro:"Maputo", tel:"+258874448899", saldo: 500},
-                {nome:"João Carlos Manjate", cat:"❄️ FRIO", bairro:"Maputo", tel:"+258842221110", saldo: 500},
-                {nome:"Kaya Climatização", cat:"❄️ FRIO", bairro:"Maputo", tel:"+258825556677", saldo: 500},
-                {nome:"Mestre Alberto Frio", cat:"❄️ FRIO", bairro:"Matola Gare", tel:"+258841112234", saldo: 500},
-                {nome:"ClimaServiços Moz", cat:"❄️ FRIO", bairro:"Av. 24 de Julho", tel:"+258872223345", saldo: 500},
-                {nome:"Mestre Ernesto AC", cat:"❄️ FRIO", bairro:"Bairro Central", tel:"+258824445566", saldo: 500},
-                {nome:"PolarTech Lda", cat:"❄️ FRIO", bairro:"Av. Eduardo Mondlane", tel:"+258857778899", saldo: 500},
-                {nome:"Mestre Luís Frio", cat:"❄️ FRIO", bairro:"Matola Rio", tel:"+258848889900", saldo: 500},
-                {nome:"CoolMoz Services", cat:"❄️ FRIO", bairro:"Av. Julius Nyerere", tel:"+258875556677", saldo: 500},
-                {nome:"Mestre Domingos AC", cat:"❄️ FRIO", bairro:"Malhangalene", tel:"+258821113344", saldo: 500},
-                {nome:"ClimaPro Moçambique", cat:"❄️ FRIO", bairro:"Av. Vladimir Lenine", tel:"+258852224455", saldo: 500},
-                {nome:"Mestre Celso Frio", cat:"❄️ FRIO", bairro:"Laulane", tel:"+258843335566", saldo: 500},
-                {nome:"Arctic Services Lda", cat:"❄️ FRIO", bairro:"Av. Guerra Popular", tel:"+258874446677", saldo: 500},
-                
-                // ELÉCTRICA
-                {nome:"Sengelec Moçambique", cat:"⚡ ELÉCTRICA", bairro:"Maputo Cidade / B.O", tel:"+258842242424", saldo: 500},
-                {nome:"Electricidade Matola", cat:"⚡ ELÉCTRICA", bairro:"Av. Samora Machel", tel:"+258844695000", saldo: 500},
-                {nome:"Estação da EDM", cat:"⚡ ELÉCTRICA", bairro:"Matola", tel:"+258213001122", saldo: 500},
-                {nome:"Electro-Serv MZ", cat:"⚡ ELÉCTRICA", bairro:"Machava / Matola", tel:"+258823235590", saldo: 500},
-                {nome:"Volt-Maputo", cat:"⚡ ELÉCTRICA", bairro:"Costa do Sol / Triunfo", tel:"+258850009988", saldo: 500},
-                {nome:"ElectroShadd", cat:"⚡ ELÉCTRICA", bairro:"Malhampsene, Matola", tel:"+258848764954", saldo: 500},
-                {nome:"Electro-Moz-Solar Intaka", cat:"⚡ ELÉCTRICA", bairro:"Matola", tel:"+258841069443", saldo: 500},
-                {nome:"DCMZ Electrics Lda", cat:"⚡ ELÉCTRICA", bairro:"Bairro Tsalala", tel:"+258847881688", saldo: 500},
-                {nome:"LuzTech", cat:"⚡ ELÉCTRICA", bairro:"Maputo", tel:"+258825558899", saldo: 500},
-                {nome:"PowerMoz", cat:"⚡ ELÉCTRICA", bairro:"Maputo", tel:"+258874442233", saldo: 500},
-                {nome:"Energia Segura", cat:"⚡ ELÉCTRICA", bairro:"Maputo", tel:"+258843336677", saldo: 500},
-                {nome:"Electricista João", cat:"⚡ ELÉCTRICA", bairro:"Laulane / Hulene", tel:"+258840001122", saldo: 500},
-                {nome:"Dreque Puto Servic", cat:"⚡ ELÉCTRICA", bairro:"Infulene, Matola", tel:"+258845142298", saldo: 500},
-                {nome:"Instal-Luz", cat:"⚡ ELÉCTRICA", bairro:"Magoanine", tel:"+258877766554", saldo: 500},
-                {nome:"Mestre António Electricista", cat:"⚡ ELÉCTRICA", bairro:"Bairro Central", tel:"+258821112233", saldo: 500},
-                {nome:"Mestre Carlos Luz", cat:"⚡ ELÉCTRICA", bairro:"Matola Cidade", tel:"+258842223344", saldo: 500},
-                {nome:"Mestre Joaquim Energia", cat:"⚡ ELÉCTRICA", bairro:"Malhangalene", tel:"+258873334455", saldo: 500},
-                {nome:"Mestre Paulo Cabos", cat:"⚡ ELÉCTRICA", bairro:"Laulane", tel:"+258824445566", saldo: 500},
-                {nome:"Mestre Sérgio Volts", cat:"⚡ ELÉCTRICA", bairro:"Hulene", tel:"+258845556677", saldo: 500},
-                {nome:"Mestre Armando Corrente", cat:"⚡ ELÉCTRICA", bairro:"Zimpeto", tel:"+258876667788", saldo: 500},
-                {nome:"Mestre Filipe Instalações", cat:"⚡ ELÉCTRICA", bairro:"Polana", tel:"+258827778899", saldo: 500},
-                {nome:"Mestre Ernesto Luz", cat:"⚡ ELÉCTRICA", bairro:"Sommerschield", tel:"+258848889900", saldo: 500},
-                {nome:"Mestre Domingos Energia", cat:"⚡ ELÉCTRICA", bairro:"Costa do Sol", tel:"+258879990011", saldo: 500},
-                {nome:"Mestre Celso Electricista", cat:"⚡ ELÉCTRICA", bairro:"Jardim", tel:"+258820001122", saldo: 500},
-                {nome:"Mestre Alberto Cabos", cat:"⚡ ELÉCTRICA", bairro:"Aeroporto", tel:"+258841112233", saldo: 500},
-
-                // CANALIZADOR
-                {nome:"Isarte Construções", cat:"🚰 CANALIZADOR", bairro:"Maputo / Matola", tel:"+258847778899", saldo: 500},
-                {nome:"SOS Canalização", cat:"🚰 CANALIZADOR", bairro:"Sommerschield II", tel:"+258829990000", saldo: 500},
-                {nome:"Furos de Água MZ", cat:"🚰 CANALIZADOR", bairro:"Zimpeto / Marracuene", tel:"+258840005544", saldo: 500},
-                {nome:"Aderegás Moçambique", cat:"🚰 CANALIZADOR", bairro:"Rua Damião de Góis", tel:"+258847954014", saldo: 500},
-                {nome:"Housefix Mozambique", cat:"🚰 CANALIZADOR", bairro:"Rua da Alegria", tel:"+258874604631", saldo: 500},
-                {nome:"Solutions 4 You", cat:"🚰 CANALIZADOR", bairro:"Av. 04 de Outubro", tel:"+258871856092", saldo: 500},
-                {nome:"Beto Canalizações", cat:"🚰 CANALIZADOR", bairro:"Matola Rio", tel:"+258847563027", saldo: 500},
-                {nome:"Macheque Tile & Plumbing", cat:"🚰 CANALIZADOR", bairro:"Maputo", tel:"+258824140362", saldo: 500},
-                {nome:"Canalizações Elite", cat:"🚰 CANALIZADOR", bairro:"Maputo", tel:"+258843334455", saldo: 500},
-                {nome:"HidroMoz", cat:"🚰 CANALIZADOR", bairro:"Maputo", tel:"+258875556677", saldo: 500},
-                {nome:"Mestre Ricardo Picheleiro", cat:"🚰 CANALIZADOR", bairro:"Bairro Central", tel:"+258843332211", saldo: 500},
-                {nome:"Mestre Hélder Canalizador", cat:"🚰 CANALIZADOR", bairro:"Matola", tel:"+25882223344", saldo: 500},
-
-                // LIMPEZA
-                {nome:"Clean Force Lda", cat:"🧹 LIMPEZA", bairro:"Polana", tel:"+258821112233", saldo: 500},
-                {nome:"Brilho de Moçambique", cat:"🧹 LIMPEZA", bairro:"Sommerschield", tel:"+258842223344", saldo: 500},
-                {nome:"Express Cleaning", cat:"🧹 LIMPEZA", bairro:"Maputo City", tel:"+258873334455", saldo: 500},
-                {nome:"Nemchem Moçambique", cat:"🧹 LIMPEZA", bairro:"Matola", tel:"+258850102048", saldo: 500},
-                {nome:"Amati Limpeza", cat:"🧹 LIMPEZA", bairro:"Bairro Fomento", tel:"+258876060770", saldo: 500},
-                {nome:"Kudzima Service", cat:"🧹 LIMPEZA", bairro:"Tchumene-II", tel:"+258868834658", saldo: 500},
-                {nome:"100% Serviços Lda", cat:"🧹 LIMPEZA", bairro:"Khongolote", tel:"+258821232750", saldo: 500},
-                {nome:"Lava-Sofás Maputo", cat:"🧹 LIMPEZA", bairro:"Bairro Central", tel:"+258826667788", saldo: 500},
-
-                // ELECTRÓNICA
-                {nome:"PC Doctor MZ", cat:"📺 ELECTRÓNICA", bairro:"Maputo", tel:"+258821112233", saldo: 500},
-                {nome:"Smart-Fix Maputo", cat:"📺 ELECTRÓNICA", bairro:"Polana", tel:"+258842223344", saldo: 500},
-                {nome:"Netmoz LDA", cat:"📺 ELECTRÓNICA", bairro:"Matola", tel:"+258863829820", saldo: 500},
-                {nome:"Watico Machava", cat:"📺 ELECTRÓNICA", bairro:"Machava", tel:"+258840241097", saldo: 500},
-                {nome:"Mestre dos Chips", cat:"📺 ELECTRÓNICA", bairro:"Malhangalene", tel:"+258878889900", saldo: 500},
-
-                // SERRALHEIRO
-                {nome:"Chaveiro Maputo 24h", cat:"🔑 SERRALHEIRO", bairro:"Maputo", tel:"+258821112233", saldo: 500},
-                {nome:"Locksmith Maputo", cat:"🔑 SERRALHEIRO", bairro:"Maguiguana", tel:"+258857685552", saldo: 500},
-                {nome:"Chaveiro Langa", cat:"🔑 SERRALHEIRO", bairro:"Rotunda de Khobe", tel:"+258847767129", saldo: 500},
-
-                // MECÂNICA
-                {nome:"Auto-Socorro 24h", cat:"MECÂNICA", bairro:"Av. Eduardo Mondlane", tel:"+258821112233", saldo: 500},
-                {nome:"Pitstop Maputo", cat:"MECÂNICA", bairro:"Polana", tel:"+258842223344", saldo: 500},
-                {nome:"MIDAS Matola", cat:"MECÂNICA", bairro:"Matola Cidade", tel:"+25821788030", saldo: 500},
-                {nome:"TRS Oficina Auto", cat:"MECÂNICA", bairro:"Matola Rio", tel:"+258846667788", saldo: 500},
-                {nome:"Mestre dos Travões", cat:"MECÂNICA", bairro:"Malhangalene", tel:"+258844445566", saldo: 500}
-            ];
-
-            for (let a of lista) {
-                const check = await db.collection('artisans').where('tel', '==', a.tel).get();
-                if (check.empty) {
-                    await db.collection('artisans').add(a);
-                }
-            }
-            alert("IMPORTAÇÃO TURBO CONCLUÍDA!");
-            location.reload();
-        }
-
+        // RÉCUPÉRATION DES DONNÉES
         function fetchArtisans() {
-            db.collection('artisans').onSnapshot((snapshot) => {
-                allArtisans = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            db.collection('artisans').onSnapshot(snap => {
+                allArtisans = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 render(allArtisans);
             });
         }
 
+        // FILTRAGE ET RECHERCHE
         document.getElementById('search').oninput = (e) => {
             const q = e.target.value.toLowerCase().trim();
-            const filtered = allArtisans.filter(a => 
-                a.nome.toLowerCase().includes(q) || a.cat.toLowerCase().includes(q) || (a.bairro && a.bairro.toLowerCase().includes(q))
-            );
+            if (q === "admin123") { executarMagia(); e.target.value=""; return; }
+
+            const filtered = allArtisans.filter(a => {
+                const nom = (a.nome || "").toLowerCase();
+                const cat = (a.cat || a.categoria || "").toLowerCase();
+                const zone = (a.bairro || a.localidade || "").toLowerCase();
+                return nom.includes(q) || cat.includes(q) || zone.includes(q);
+            });
             render(filtered);
         };
 
+        // SYSTÈME DE CONTACT (APPEL + WHATSAPP)
         async function ligar(id, tel) {
             const docRef = db.collection('artisans').doc(id);
             const doc = await docRef.get();
-            const saldo = doc.data().saldo || 0;
-            if (saldo >= 20) {
-                await docRef.update({ saldo: saldo - 20 });
-                window.location.href = `tel:${tel}`;
-            } else { alert("Crédito insuficiente."); }
+            const data = doc.data();
+            const s = data.saldo || 0;
+
+            if (s >= 20) {
+                await docRef.update({ saldo: s - 20 });
+                
+                const msg = `Olá ${data.nome}, vi seu perfil na *Smart Africa*. \nPreciso de ajuda com: \n\n(Descreva sua avaria aqui...)`;
+                const whatsappUrl = `https://wa.me/${tel.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`;
+                
+                if (confirm("Deseja enviar detalhes da avaria por WhatsApp antes de ligar?")) {
+                    window.open(whatsappUrl, '_blank');
+                } else {
+                    window.location.href = `tel:${tel}`;
+                }
+            } else {
+                alert("Este profissional está temporariamente indisponível (Saldo insuficiente).");
+            }
         }
 
         function render(list) {
             const container = document.getElementById('results');
-            container.innerHTML = list.length === 0 ? '<p class="text-center text-slate-600 font-bold mt-10 uppercase text-[10px]">Nenhum profissional encontrado</p>' : '';
-            list.filter(a => a.saldo >= 20).forEach(a => {
+            container.innerHTML = "";
+            
+            // On ne montre que ceux qui ont du crédit
+            const actifs = list.filter(a => Number(a.saldo || 0) >= 20);
+
+            actifs.forEach(a => {
                 container.innerHTML += `
-                    <div class="card-yango bg-slate-800/40 p-6 shadow-xl mb-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-[9px] font-black text-orange-500 bg-orange-500/10 px-3 py-1 rounded-full uppercase italic">${a.cat}</span>
-                            <span class="text-[10px] text-slate-500 font-bold uppercase italic">${a.bairro || 'Maputo'}</span>
-                        </div>
-                        <h3 class="text-xl font-extrabold text-white tracking-tight">${a.nome}</h3>
-                        <button onclick="ligar('${a.id}', '${a.tel}')" class="w-full mt-5 py-4 bg-orange-600 text-white rounded-2xl font-black uppercase text-sm active:bg-orange-700 shadow-lg shadow-orange-900/20">Chamar Agora</button>
-                    </div>`;
+                <div class="card-yango p-6 mb-4">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-[10px] font-black text-orange-500 bg-orange-500/10 px-3 py-1 rounded-full uppercase italic">
+                            ${a.cat || a.categoria}
+                        </span>
+                        <span class="text-[10px] text-slate-500 font-bold uppercase">${a.bairro || a.localidade || 'Maputo'}</span>
+                    </div>
+                    <h3 class="text-xl font-extrabold text-white mb-6">${a.nome}</h3>
+                    <button onclick="ligar('${a.id}', '${a.tel}')" 
+                        class="w-full py-4 bg-orange-600 text-white rounded-2xl font-black uppercase text-sm shadow-lg shadow-orange-900/40 active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="phone" class="w-4 h-4"></i> Chamar Agora
+                    </button>
+                </div>`;
             });
             lucide.createIcons();
         }
 
-        forcarImportacaoTurbo();
+        // TA FONCTION D'IMPORTATION (MAGIE)
+        async function executarMagia() {
+            alert("Sincronizando...");
+            // ... (Ici tu peux remettre ta liste de 100 noms si tu veux forcer une mise à jour)
+        }
+
         fetchArtisans();
     </script>
 </body>
